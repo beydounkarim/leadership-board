@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leadership Board - Vote</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #1a2744;
+    --navy-light: #2a3f6a;
+    --blue: #3b6cb4;
+    --blue-light: #5a8fd4;
+    --gold: #d4a843;
+    --silver: #a8a8a8;
+    --bronze: #b87333;
+    --bg: #f0f2f5;
+    --card-bg: #ffffff;
+    --text: #1a2744;
+    --text-light: #6b7280;
+    --success: #22c55e;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--navy), var(--navy-light));
+    color: white;
+    text-align: center;
+    padding: 28px 20px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 4px;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+  }
+
+  .step { display: none; }
+  .step.active { display: block; }
+
+  .step-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  .step-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  /* Progress bar */
+  .progress {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .progress-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #d1d5db;
+    transition: background 0.3s;
+  }
+
+  .progress-dot.active { background: var(--blue); }
+  .progress-dot.done { background: var(--success); }
+
+  /* Card grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 440px) {
+    .grid { grid-template-columns: 1fr; max-width: 280px; margin: 0 auto; }
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius);
+    padding: 18px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .card:hover {
+    border-color: var(--blue-light);
+    box-shadow: 0 4px 16px rgba(59,108,180,0.15);
+    transform: translateY(-2px);
+  }
+
+  .card.selected {
+    border-color: var(--blue);
+    background: #eef3fb;
+  }
+
+  .card.rank-1 { border-color: var(--gold); background: #fdf8ec; }
+  .card.rank-2 { border-color: var(--silver); background: #f5f5f5; }
+  .card.rank-3 { border-color: var(--bronze); background: #faf3ec; }
+
+  .card-photo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 10px;
+    display: block;
+    background: #e5e7eb;
+  }
+
+  .card-initials {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: white;
+    background: var(--navy-light);
+  }
+
+  .card-name {
+    font-weight: 600;
+    font-size: 0.92rem;
+    margin-bottom: 2px;
+  }
+
+  .card-title {
+    font-size: 0.78rem;
+    color: var(--text-light);
+  }
+
+  .badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: white;
+    font-weight: 700;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  .badge-1 { background: var(--gold); }
+  .badge-2 { background: var(--silver); }
+  .badge-3 { background: var(--bronze); }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .btn {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--blue);
+    color: white;
+  }
+
+  .btn-primary:hover { background: var(--navy-light); }
+
+  .btn-primary:disabled {
+    background: #9cb5d8;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background: white;
+    color: var(--text);
+    border: 2px solid #d1d5db;
+  }
+
+  .btn-secondary:hover { border-color: var(--blue-light); }
+
+  /* Review cards */
+  .review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .review-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    border: 2px solid #e5e7eb;
+  }
+
+  .review-card.rank-1 { border-color: var(--gold); }
+  .review-card.rank-2 { border-color: var(--silver); }
+  .review-card.rank-3 { border-color: var(--bronze); }
+
+  .review-rank {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .review-photo {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #e5e7eb;
+  }
+
+  .review-initials {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: var(--navy-light);
+    flex-shrink: 0;
+  }
+
+  .review-info { flex: 1; }
+  .review-name { font-weight: 600; font-size: 0.95rem; }
+  .review-title { font-size: 0.8rem; color: var(--text-light); }
+
+  /* Loading */
+  .spinner-wrap {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e5e7eb;
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Confirmation */
+  .confirm-wrap {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .checkmark {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--success);
+    color: white;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+  }
+
+  .confirm-wrap h2 { margin-bottom: 8px; }
+  .confirm-wrap p { color: var(--text-light); margin-bottom: 20px; }
+
+  /* Selection hint */
+  .selection-hint {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 0.88rem;
+    color: var(--text-light);
+  }
+
+  .selection-hint span {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin: 0 3px;
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+
+  .hint-gold { background: #fdf8ec; color: #b8941a; border: 1px solid var(--gold); }
+  .hint-silver { background: #f5f5f5; color: #6b6b6b; border: 1px solid var(--silver); }
+  .hint-bronze { background: #faf3ec; color: #96611e; border: 1px solid var(--bronze); }
+  .hint-empty { background: #f3f4f6; color: #9ca3af; border: 1px solid #d1d5db; }
+
+  .error-msg {
+    text-align: center;
+    color: #dc2626;
+    margin-top: 12px;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Portfolio Support Group</h1>
+  <p>Leadership Board</p>
+</header>
+
+<div class="container">
+  <!-- Progress -->
+  <div class="progress" id="progress">
+    <div class="progress-dot active"></div>
+    <div class="progress-dot"></div>
+    <div class="progress-dot"></div>
+  </div>
+
+  <!-- Step 1: Who are you? -->
+  <div class="step active" id="step1">
+    <div class="step-title">Who are you?</div>
+    <div class="step-subtitle">Select your name to get started</div>
+    <div class="grid" id="identityGrid"></div>
+  </div>
+
+  <!-- Step 2: Pick your top 3 -->
+  <div class="step" id="step2">
+    <div class="step-title">Pick your top 3</div>
+    <div class="step-subtitle">Click colleagues in order: 1st, 2nd, then 3rd</div>
+    <div class="selection-hint" id="selectionHint"></div>
+    <div class="grid" id="voteGrid"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goToStep(1)">Back</button>
+      <button class="btn btn-primary" id="btnReview" disabled onclick="goToStep(3)">Review</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Review -->
+  <div class="step" id="step3">
+    <div class="step-title">Review your votes</div>
+    <div class="step-subtitle">Confirm your top 3 picks</div>
+    <div class="review-list" id="reviewList"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goToStep(2)">Back</button>
+      <button class="btn btn-primary" onclick="submitVote()">Submit Vote</button>
+    </div>
+    <div class="error-msg" id="submitError"></div>
+  </div>
+
+  <!-- Step 4: Loading -->
+  <div class="step" id="step4">
+    <div class="spinner-wrap">
+      <div class="spinner"></div>
+      <p>Submitting your vote...</p>
+    </div>
+  </div>
+
+  <!-- Step 5: Confirmation -->
+  <div class="step" id="step5">
+    <div class="confirm-wrap">
+      <div class="checkmark">&#10003;</div>
+      <h2>Vote submitted!</h2>
+      <p>Thank you for voting. You can change your vote anytime by voting again.</p>
+      <button class="btn btn-secondary" onclick="resetAll()">Change my vote</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION - Update this URL after deploying Apps Script
+// ============================================================
+var API_URL = 'https://script.google.com/macros/s/AKfycbwQ490yQ_RasKRBKy8BRZaXOo0arGd8n2Zi3XS-MYf-jJUfTanSUBuuSEODSIgg0Jw7/exec';
+
+// Team members data
+var TEAM = [
+  { name: 'Mohamed Atef', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/03/Mohamed-Atef-600x449.jpg' },
+  { name: 'Mauricio Atri', title: 'Senior Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/03/Mauricio-Atri-600x449.jpg' },
+  { name: 'Adele Aviles', title: 'Senior Associate', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Adele-Aviles-600x449.jpg' },
+  { name: 'Andrei Balta', title: 'Senior Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Andrei-Balta-1400x1049.jpg' },
+  { name: 'Karim Beydoun', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/03/Karim-Beydoun-600x449.jpg' },
+  { name: 'Tina Chen', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Tina-Chen-1-600x449.jpg' },
+  { name: 'Cassie Clavin', title: 'Senior Associate', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Cassie-Clavin-600x449.jpg' },
+  { name: 'Hakim Ghanem', title: 'Senior Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Hakim-Ghanem-600x449.jpg' },
+  { name: 'Raul Guadarrama', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/03/Raul-Guadarrama-600x449.jpg' },
+  { name: 'Maddy Keeshan', title: 'Vice President', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/03/Madeline-Keeshan-600x449.jpg' },
+  { name: 'Rish Khara', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Rish-Khara-retouched-cropped-headshot-1514x1134-1-600x449.png' },
+  { name: 'Gilbert Lemieux', title: 'Vice President', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/04/Gilbert-Lemieux-600x449.jpg' },
+  { name: 'Hilda Lui', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Hilda-Lui-600x449.jpg' },
+  { name: 'Marco Mendes', title: 'Managing Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Marco-Mendes-600x449.jpg' },
+  { name: 'Neal Vachhani', title: 'Senior Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Neal-Vachhani-1-600x449.jpg' }
+];
+
+// State
+var currentStep = 1;
+var voter = null;
+var picks = []; // up to 3: [name, name, name]
+
+function getInitials(name) {
+  return name.split(' ').map(function(w) { return w[0]; }).join('');
+}
+
+function createPhotoEl(member, size) {
+  var img = document.createElement('img');
+  img.src = member.photo;
+  img.alt = member.name;
+  img.className = size === 'small' ? 'review-photo' : 'card-photo';
+  img.onerror = function() {
+    var initDiv = document.createElement('div');
+    initDiv.className = size === 'small' ? 'review-initials' : 'card-initials';
+    initDiv.textContent = getInitials(member.name);
+    img.replaceWith(initDiv);
+  };
+  return img;
+}
+
+function renderIdentityGrid() {
+  var grid = document.getElementById('identityGrid');
+  grid.innerHTML = '';
+  TEAM.forEach(function(member) {
+    var card = document.createElement('div');
+    card.className = 'card' + (voter === member.name ? ' selected' : '');
+    card.appendChild(createPhotoEl(member, 'large'));
+    var nameDiv = document.createElement('div');
+    nameDiv.className = 'card-name';
+    nameDiv.textContent = member.name;
+    card.appendChild(nameDiv);
+    var titleDiv = document.createElement('div');
+    titleDiv.className = 'card-title';
+    titleDiv.textContent = member.title;
+    card.appendChild(titleDiv);
+    card.onclick = function() {
+      voter = member.name;
+      picks = [];
+      goToStep(2);
+    };
+    grid.appendChild(card);
+  });
+}
+
+function renderVoteGrid() {
+  var grid = document.getElementById('voteGrid');
+  grid.innerHTML = '';
+  TEAM.forEach(function(member) {
+    if (member.name === voter) return;
+    var rank = picks.indexOf(member.name);
+    var card = document.createElement('div');
+    var cls = 'card';
+    if (rank >= 0) cls += ' rank-' + (rank + 1);
+    card.className = cls;
+
+    card.appendChild(createPhotoEl(member, 'large'));
+    var nameDiv = document.createElement('div');
+    nameDiv.className = 'card-name';
+    nameDiv.textContent = member.name;
+    card.appendChild(nameDiv);
+    var titleDiv = document.createElement('div');
+    titleDiv.className = 'card-title';
+    titleDiv.textContent = member.title;
+    card.appendChild(titleDiv);
+
+    if (rank >= 0) {
+      var badge = document.createElement('div');
+      badge.className = 'badge badge-' + (rank + 1);
+      badge.textContent = '#' + (rank + 1);
+      card.appendChild(badge);
+    }
+
+    card.onclick = function() {
+      var idx = picks.indexOf(member.name);
+      if (idx >= 0) {
+        picks.splice(idx, 1);
+      } else if (picks.length < 3) {
+        picks.push(member.name);
+      }
+      renderVoteGrid();
+      updateSelectionHint();
+      document.getElementById('btnReview').disabled = picks.length < 3;
+    };
+    grid.appendChild(card);
+  });
+}
+
+function updateSelectionHint() {
+  var hint = document.getElementById('selectionHint');
+  var labels = ['1st', '2nd', '3rd'];
+  var colors = ['hint-gold', 'hint-silver', 'hint-bronze'];
+  var html = '';
+  for (var i = 0; i < 3; i++) {
+    if (picks[i]) {
+      html += '<span class="' + colors[i] + '">' + labels[i] + ': ' + picks[i].split(' ')[0] + '</span>';
+    } else {
+      html += '<span class="hint-empty">' + labels[i] + ': ?</span>';
+    }
+  }
+  hint.innerHTML = html;
+}
+
+function renderReview() {
+  var list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  var labels = ['1st Place', '2nd Place', '3rd Place'];
+  var rankColors = ['var(--gold)', 'var(--silver)', 'var(--bronze)'];
+  picks.forEach(function(name, i) {
+    var member = TEAM.find(function(m) { return m.name === name; });
+    var card = document.createElement('div');
+    card.className = 'review-card rank-' + (i + 1);
+
+    var rankEl = document.createElement('div');
+    rankEl.className = 'review-rank';
+    rankEl.style.background = rankColors[i];
+    rankEl.textContent = '#' + (i + 1);
+    card.appendChild(rankEl);
+
+    card.appendChild(createPhotoEl(member, 'small'));
+
+    var info = document.createElement('div');
+    info.className = 'review-info';
+    info.innerHTML = '<div class="review-name">' + member.name + '</div>' +
+                     '<div class="review-title">' + member.title + '</div>';
+    card.appendChild(info);
+    list.appendChild(card);
+  });
+}
+
+function goToStep(step) {
+  currentStep = step;
+  for (var i = 1; i <= 5; i++) {
+    document.getElementById('step' + i).classList.toggle('active', i === step);
+  }
+  var dots = document.querySelectorAll('.progress-dot');
+  for (var j = 0; j < dots.length; j++) {
+    dots[j].className = 'progress-dot';
+    if (j < Math.min(step, 3) - 1) dots[j].classList.add('done');
+    if (j === Math.min(step, 3) - 1) dots[j].classList.add('active');
+  }
+  document.getElementById('progress').style.display = step > 3 ? 'none' : 'flex';
+
+  if (step === 1) renderIdentityGrid();
+  if (step === 2) { renderVoteGrid(); updateSelectionHint(); document.getElementById('btnReview').disabled = picks.length < 3; }
+  if (step === 3) renderReview();
+}
+
+function submitVote() {
+  document.getElementById('submitError').textContent = '';
+  goToStep(4);
+
+  var payload = JSON.stringify({
+    voter: voter,
+    first: picks[0],
+    second: picks[1],
+    third: picks[2]
+  });
+
+  fetch(API_URL, {
+    method: 'POST',
+    body: payload,
+    headers: { 'Content-Type': 'text/plain' }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      goToStep(5);
+    } else {
+      goToStep(3);
+      document.getElementById('submitError').textContent = data.error || 'Something went wrong. Please try again.';
+    }
+  })
+  .catch(function() {
+    goToStep(3);
+    document.getElementById('submitError').textContent = 'Network error. Please check your connection and try again.';
+  });
+}
+
+function resetAll() {
+  voter = null;
+  picks = [];
+  goToStep(1);
+}
+
+// Initialize
+renderIdentityGrid();
+</script>
+</body>
+</html>

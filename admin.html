@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leadership Board - Admin</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #1a2744;
+    --navy-light: #2a3f6a;
+    --blue: #3b6cb4;
+    --blue-light: #5a8fd4;
+    --gold: #d4a843;
+    --silver: #a8a8a8;
+    --bronze: #b87333;
+    --bg: #f0f2f5;
+    --card-bg: #ffffff;
+    --text: #1a2744;
+    --text-light: #6b7280;
+    --success: #22c55e;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--navy), var(--navy-light));
+    color: white;
+    text-align: center;
+    padding: 28px 20px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+
+  header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; }
+  header p { font-size: 0.9rem; opacity: 0.8; margin-top: 4px; }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+  }
+
+  .auth-wall {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .auth-wall p {
+    color: var(--text-light);
+    margin-bottom: 20px;
+    font-size: 1rem;
+  }
+
+  .btn {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: var(--navy-light); }
+  .btn-secondary { background: white; color: var(--text); border: 2px solid #d1d5db; }
+  .btn-secondary:hover { border-color: var(--blue-light); }
+  .btn-sm { padding: 8px 18px; font-size: 0.85rem; }
+
+  .error-msg { color: #dc2626; margin-top: 12px; font-size: 0.9rem; }
+
+  /* Dashboard sections */
+  .dashboard { display: none; }
+  .dashboard.active { display: block; }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .toolbar-left { font-size: 0.85rem; color: var(--text-light); }
+
+  .section {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Voting status */
+  .progress-bar-wrap {
+    background: #e5e7eb;
+    border-radius: 20px;
+    height: 14px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--success));
+    border-radius: 20px;
+    transition: width 0.5s;
+  }
+
+  .status-text {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+  }
+
+  .not-voted-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .not-voted-tag {
+    background: #fef2f2;
+    color: #dc2626;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  /* Leaderboard */
+  .lb-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    gap: 12px;
+    transition: background 0.2s;
+  }
+
+  .lb-row:hover { background: #f9fafb; }
+  .lb-row.top-1 { background: #fdf8ec; }
+  .lb-row.top-2 { background: #f7f7f7; }
+  .lb-row.top-3 { background: #faf3ec; }
+
+  .lb-rank {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    color: white;
+  }
+
+  .lb-rank-1 { background: var(--gold); }
+  .lb-rank-2 { background: var(--silver); }
+  .lb-rank-3 { background: var(--bronze); }
+  .lb-rank-other { background: #d1d5db; color: var(--text); }
+
+  .lb-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #e5e7eb;
+  }
+
+  .lb-initials {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    background: var(--navy-light);
+    flex-shrink: 0;
+  }
+
+  .lb-info { flex: 1; }
+  .lb-name { font-weight: 600; font-size: 0.92rem; }
+  .lb-title-text { font-size: 0.78rem; color: var(--text-light); }
+
+  .lb-points {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--navy);
+    min-width: 60px;
+    text-align: right;
+  }
+
+  .lb-breakdown {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    text-align: right;
+  }
+
+  /* Votes table */
+  .votes-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  .votes-table th {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .votes-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .votes-table tr:hover td { background: #f9fafb; }
+
+  .rank-label {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  .rank-label-1 { background: #fdf8ec; color: #b8941a; }
+  .rank-label-2 { background: #f5f5f5; color: #6b6b6b; }
+  .rank-label-3 { background: #faf3ec; color: #96611e; }
+
+  .timestamp { font-size: 0.78rem; color: var(--text-light); }
+
+  /* Loading */
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #e5e7eb;
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 40px auto;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-wrap { text-align: center; padding: 40px; }
+
+  @media (max-width: 600px) {
+    .votes-table { font-size: 0.8rem; }
+    .votes-table th, .votes-table td { padding: 8px 6px; }
+    .section { padding: 16px; }
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Portfolio Support Group</h1>
+  <p>Leadership Board - Admin Dashboard</p>
+</header>
+
+<div class="container">
+  <!-- Auth wall -->
+  <div id="authWall" class="auth-wall">
+    <p>Enter the admin key to view results.</p>
+    <button class="btn btn-primary" onclick="promptForKey()">Enter Admin Key</button>
+    <div class="error-msg" id="authError"></div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="dashboard">
+    <div class="toolbar">
+      <div class="toolbar-left" id="lastUpdated"></div>
+      <div>
+        <button class="btn btn-secondary btn-sm" onclick="loadData()">Refresh</button>
+        <button class="btn btn-secondary btn-sm" onclick="logout()" style="margin-left:6px;">Logout</button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loadingWrap" class="loading-wrap">
+      <div class="spinner"></div>
+      <p>Loading results...</p>
+    </div>
+
+    <!-- Content -->
+    <div id="dashContent" style="display:none;">
+      <!-- Voting Status -->
+      <div class="section">
+        <div class="section-title">Voting Status</div>
+        <div class="status-text" id="statusText"></div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <div id="notVotedWrap" style="display:none;">
+          <div style="font-size:0.82rem;color:var(--text-light);margin-top:12px;">Haven't voted yet:</div>
+          <div class="not-voted-list" id="notVotedList"></div>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="section">
+        <div class="section-title">Leaderboard</div>
+        <div id="leaderboard"></div>
+        <div id="noVotesMsg" style="display:none;text-align:center;padding:20px;color:var(--text-light);">No votes have been cast yet.</div>
+      </div>
+
+      <!-- Individual Votes -->
+      <div class="section">
+        <div class="section-title">Individual Votes</div>
+        <div class="table-scroll">
+          <table class="votes-table" id="votesTable">
+            <thead>
+              <tr>
+                <th>Voter</th>
+                <th>1st Choice</th>
+                <th>2nd Choice</th>
+                <th>3rd Choice</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="votesBody"></tbody>
+          </table>
+        </div>
+        <div id="noVotesTable" style="display:none;text-align:center;padding:20px;color:var(--text-light);">No votes recorded.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION - Update this URL after deploying Apps Script
+// ============================================================
+var API_URL = 'https://script.google.com/macros/s/AKfycbwQ490yQ_RasKRBKy8BRZaXOo0arGd8n2Zi3XS-MYf-jJUfTanSUBuuSEODSIgg0Jw7/exec';
+
+var TEAM = [
+  { name: 'Mohamed Atef', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/03/Mohamed-Atef-600x449.jpg' },
+  { name: 'Mauricio Atri', title: 'Senior Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/03/Mauricio-Atri-600x449.jpg' },
+  { name: 'Adele Aviles', title: 'Senior Associate', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Adele-Aviles-600x449.jpg' },
+  { name: 'Andrei Balta', title: 'Senior Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Andrei-Balta-1400x1049.jpg' },
+  { name: 'Karim Beydoun', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/03/Karim-Beydoun-600x449.jpg' },
+  { name: 'Tina Chen', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Tina-Chen-1-600x449.jpg' },
+  { name: 'Cassie Clavin', title: 'Senior Associate', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Cassie-Clavin-600x449.jpg' },
+  { name: 'Hakim Ghanem', title: 'Senior Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Hakim-Ghanem-600x449.jpg' },
+  { name: 'Raul Guadarrama', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/03/Raul-Guadarrama-600x449.jpg' },
+  { name: 'Maddy Keeshan', title: 'Vice President', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/03/Madeline-Keeshan-600x449.jpg' },
+  { name: 'Rish Khara', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Rish-Khara-retouched-cropped-headshot-1514x1134-1-600x449.png' },
+  { name: 'Gilbert Lemieux', title: 'Vice President', photo: 'https://www.adventinternational.com/wp-content/uploads/2025/04/Gilbert-Lemieux-600x449.jpg' },
+  { name: 'Hilda Lui', title: 'Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Hilda-Lui-600x449.jpg' },
+  { name: 'Marco Mendes', title: 'Managing Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Marco-Mendes-600x449.jpg' },
+  { name: 'Neal Vachhani', title: 'Senior Director', photo: 'https://www.adventinternational.com/wp-content/uploads/2024/10/Neal-Vachhani-1-600x449.jpg' }
+];
+
+var adminSecret = null;
+
+function getInitials(name) {
+  return name.split(' ').map(function(w) { return w[0]; }).join('');
+}
+
+function promptForKey() {
+  var key = prompt('Enter admin key:');
+  if (!key) return;
+  adminSecret = key;
+  sessionStorage.setItem('adminSecret', key);
+  document.getElementById('authWall').style.display = 'none';
+  document.getElementById('dashboard').classList.add('active');
+  loadData();
+}
+
+function logout() {
+  adminSecret = null;
+  sessionStorage.removeItem('adminSecret');
+  document.getElementById('authWall').style.display = 'block';
+  document.getElementById('dashboard').classList.remove('active');
+  document.getElementById('authError').textContent = '';
+}
+
+function loadData() {
+  document.getElementById('loadingWrap').style.display = 'block';
+  document.getElementById('dashContent').style.display = 'none';
+
+  fetch(API_URL + '?secret=' + encodeURIComponent(adminSecret))
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (!data.success) {
+        document.getElementById('loadingWrap').style.display = 'none';
+        if (data.error === 'Unauthorized.') {
+          logout();
+          document.getElementById('authError').textContent = 'Invalid admin key. Please try again.';
+        }
+        return;
+      }
+      renderDashboard(data);
+    })
+    .catch(function(err) {
+      document.getElementById('loadingWrap').style.display = 'none';
+      alert('Failed to load data. Check your connection and API URL.');
+    });
+}
+
+function renderDashboard(data) {
+  document.getElementById('loadingWrap').style.display = 'none';
+  document.getElementById('dashContent').style.display = 'block';
+  document.getElementById('lastUpdated').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+
+  var votes = data.votes;
+  var totalMembers = data.totalMembers;
+  var allMembers = data.members;
+  var votedNames = votes.map(function(v) { return v.voter; });
+
+  // Voting Status
+  var votedCount = votes.length;
+  var pct = Math.round((votedCount / totalMembers) * 100);
+  document.getElementById('statusText').textContent = votedCount + ' of ' + totalMembers + ' team members have voted (' + pct + '%)';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  var notVoted = allMembers.filter(function(m) { return votedNames.indexOf(m) === -1; });
+  var notVotedWrap = document.getElementById('notVotedWrap');
+  var notVotedList = document.getElementById('notVotedList');
+  if (notVoted.length > 0) {
+    notVotedWrap.style.display = 'block';
+    notVotedList.innerHTML = notVoted.map(function(n) {
+      return '<span class="not-voted-tag">' + n + '</span>';
+    }).join('');
+  } else {
+    notVotedWrap.style.display = 'none';
+  }
+
+  // Leaderboard
+  var points = {};
+  var firsts = {};
+  var seconds = {};
+  var thirds = {};
+  allMembers.forEach(function(m) { points[m] = 0; firsts[m] = 0; seconds[m] = 0; thirds[m] = 0; });
+
+  votes.forEach(function(v) {
+    points[v.first] = (points[v.first] || 0) + 3;
+    points[v.second] = (points[v.second] || 0) + 2;
+    points[v.third] = (points[v.third] || 0) + 1;
+    firsts[v.first] = (firsts[v.first] || 0) + 1;
+    seconds[v.second] = (seconds[v.second] || 0) + 1;
+    thirds[v.third] = (thirds[v.third] || 0) + 1;
+  });
+
+  var sorted = Object.keys(points).map(function(name) {
+    return { name: name, pts: points[name], f: firsts[name], s: seconds[name], t: thirds[name] };
+  }).sort(function(a, b) {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if (b.f !== a.f) return b.f - a.f;
+    return b.s - a.s;
+  });
+
+  var lb = document.getElementById('leaderboard');
+  var noVotesMsg = document.getElementById('noVotesMsg');
+
+  if (votes.length === 0) {
+    lb.innerHTML = '';
+    noVotesMsg.style.display = 'block';
+  } else {
+    noVotesMsg.style.display = 'none';
+    // Filter out members with 0 points
+    var withPoints = sorted.filter(function(s) { return s.pts > 0; });
+    lb.innerHTML = withPoints.map(function(entry, i) {
+      var member = TEAM.find(function(m) { return m.name === entry.name; });
+      var rankClass = i < 3 ? 'top-' + (i + 1) : '';
+      var rankBadgeClass = i < 3 ? 'lb-rank-' + (i + 1) : 'lb-rank-other';
+
+      var photoHtml;
+      if (member) {
+        photoHtml = '<img class="lb-photo" src="' + member.photo + '" alt="' + entry.name + '" onerror="this.outerHTML=\'<div class=lb-initials>' + getInitials(entry.name) + '</div>\'">';
+      } else {
+        photoHtml = '<div class="lb-initials">' + getInitials(entry.name) + '</div>';
+      }
+
+      var breakdown = '';
+      if (entry.f > 0) breakdown += entry.f + ' gold';
+      if (entry.s > 0) breakdown += (breakdown ? ', ' : '') + entry.s + ' silver';
+      if (entry.t > 0) breakdown += (breakdown ? ', ' : '') + entry.t + ' bronze';
+
+      return '<div class="lb-row ' + rankClass + '">' +
+        '<div class="lb-rank ' + rankBadgeClass + '">' + (i + 1) + '</div>' +
+        photoHtml +
+        '<div class="lb-info"><div class="lb-name">' + entry.name + '</div>' +
+        '<div class="lb-title-text">' + (member ? member.title : '') + '</div></div>' +
+        '<div><div class="lb-points">' + entry.pts + ' pts</div>' +
+        '<div class="lb-breakdown">' + breakdown + '</div></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  // Votes table
+  var tbody = document.getElementById('votesBody');
+  var noVotesTable = document.getElementById('noVotesTable');
+
+  if (votes.length === 0) {
+    tbody.innerHTML = '';
+    noVotesTable.style.display = 'block';
+    document.getElementById('votesTable').style.display = 'none';
+  } else {
+    noVotesTable.style.display = 'none';
+    document.getElementById('votesTable').style.display = 'table';
+
+    // Sort by timestamp descending
+    var sortedVotes = votes.slice().sort(function(a, b) {
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    });
+
+    tbody.innerHTML = sortedVotes.map(function(v) {
+      var ts = v.timestamp ? new Date(v.timestamp).toLocaleString() : '-';
+      return '<tr>' +
+        '<td><strong>' + v.voter + '</strong></td>' +
+        '<td><span class="rank-label rank-label-1">' + v.first + '</span></td>' +
+        '<td><span class="rank-label rank-label-2">' + v.second + '</span></td>' +
+        '<td><span class="rank-label rank-label-3">' + v.third + '</span></td>' +
+        '<td class="timestamp">' + ts + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+}
+
+// Auto-login from session
+(function() {
+  var saved = sessionStorage.getItem('adminSecret');
+  if (saved) {
+    adminSecret = saved;
+    document.getElementById('authWall').style.display = 'none';
+    document.getElementById('dashboard').classList.add('active');
+    loadData();
+  }
+})();
+</script>
+</body>
+</html>
