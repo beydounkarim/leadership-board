@@ -260,6 +260,21 @@
 
   .timestamp { font-size: 0.78rem; color: var(--text-light); }
 
+  .btn-delete {
+    padding: 4px 12px;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-delete:hover { background: #fee2e2; border-color: #f87171; }
+  .btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+
   /* Loading */
   .spinner {
     width: 36px;
@@ -352,6 +367,7 @@
                 <th>2nd Choice</th>
                 <th>3rd Choice</th>
                 <th>Time</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="votesBody"></tbody>
@@ -543,15 +559,44 @@ function renderDashboard(data) {
 
     tbody.innerHTML = sortedVotes.map(function(v) {
       var ts = v.timestamp ? new Date(v.timestamp).toLocaleString() : '-';
+      var voterEscaped = v.voter.replace(/'/g, "\\'");
       return '<tr>' +
         '<td><strong>' + v.voter + '</strong></td>' +
         '<td><span class="rank-label rank-label-1">' + v.first + '</span></td>' +
         '<td><span class="rank-label rank-label-2">' + v.second + '</span></td>' +
         '<td><span class="rank-label rank-label-3">' + v.third + '</span></td>' +
         '<td class="timestamp">' + ts + '</td>' +
+        '<td><button class="btn-delete" onclick="deleteVote(\'' + voterEscaped + '\', this)">Delete</button></td>' +
         '</tr>';
     }).join('');
   }
+}
+
+function deleteVote(voterName, btn) {
+  if (!confirm('Delete vote from ' + voterName + '?')) return;
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'delete', voter: voterName, secret: adminSecret }),
+    headers: { 'Content-Type': 'text/plain' }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.success) {
+      loadData();
+    } else {
+      alert(data.error || 'Failed to delete vote.');
+      btn.disabled = false;
+      btn.textContent = 'Delete';
+    }
+  })
+  .catch(function() {
+    alert('Network error. Please try again.');
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+  });
 }
 
 // Auto-login from session

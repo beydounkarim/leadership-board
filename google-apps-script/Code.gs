@@ -27,6 +27,12 @@ var VALID_MEMBERS = [
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
+
+    // Handle admin delete action
+    if (data.action === 'delete') {
+      return handleDelete(data);
+    }
+
     var voter = data.voter;
     var first = data.first;
     var second = data.second;
@@ -136,6 +142,36 @@ function doGet(e) {
   } catch (err) {
     return sendResponse({ success: false, error: 'Server error: ' + err.message });
   }
+}
+
+function handleDelete(data) {
+  var secret = data.secret;
+  var voter = data.voter;
+
+  if (!secret || secret !== ADMIN_SECRET) {
+    return sendResponse({ success: false, error: 'Unauthorized.' });
+  }
+
+  if (!voter) {
+    return sendResponse({ success: false, error: 'Voter name is required.' });
+  }
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAME);
+
+  if (!sheet || sheet.getLastRow() < 2) {
+    return sendResponse({ success: false, error: 'No votes found.' });
+  }
+
+  var values = sheet.getDataRange().getValues();
+  for (var i = 1; i < values.length; i++) {
+    if (values[i][0] === voter) {
+      sheet.deleteRow(i + 1);
+      return sendResponse({ success: true, message: 'Vote deleted.' });
+    }
+  }
+
+  return sendResponse({ success: false, error: 'Vote not found.' });
 }
 
 function sendResponse(data) {
